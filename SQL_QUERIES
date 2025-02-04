@@ -1,0 +1,178 @@
+-- Q.1: Who is the senior most employee based on the job title?
+
+-- SELECT * FROM EMPLOYEE 
+-- ORDER BY levels desc LIMIT 1
+
+-- Q.2: Which countries have the most Invoices?
+
+-- SELECT COUNT(*) AS C,billing_country FROM INVOICE 
+-- GROUP BY billing_country
+-- ORDER BY C DESC 
+
+-- Q.3: Which countries have the most Invoices?
+
+-- SELECT BILLING_COUNTRY,TOTAL FROM INVOICE 
+-- ORDER BY TOTAL DESC
+-- LIMIT 3;
+
+-- Q-4: Which city has the best customer? We would like to throw a query Music festival
+--     in the city we made the most money.Write a query that returns one city that has
+--     the hIghest sum of the invoice totals. Returns both the city name & sum of all 
+--     invoice totals.
+
+-- SELECT SUM(TOTAL) AS INVOICE_TOTAL,BILLING_CITY 
+-- FROM INVOICE GROUP BY BILLING_CITY
+-- ORDER BY INVOICE_TOTAL DESC;
+
+-- Q-5: Who is the best customer?The customer who has spent the most money will be 
+-- declared the best customer.Write a query that returns the person who spent the
+-- money.
+
+-- SELECT C.CUSTOMER_ID,C.FIRST_NAME,C.LAST_NAME,SUM(I.TOTAL) AS TOTAL
+-- FROM CUSTOMER AS C 
+-- JOIN INVOICE AS I ON C.CUSTOMER_ID=I.CUSTOMER_ID
+-- GROUP BY C.CUSTOMER_ID
+-- ORDER BY TOTAL DESC
+-- LIMIT 3;
+
+-- Q-6: Who is the best customer?The customer who has spent the most money will be 
+-- declared the best customer.Write a query that returns the person who spent the
+-- money.
+
+-- SELECT DISTINCT EMAIL,FIRST_NAME,LAST_NAME 
+-- FROM CUSTOMER AS C
+-- JOIN INVOICE AS I ON C.CUSTOMER_ID=I.CUSTOMER_ID
+-- JOIN INVOICE_LINE AS IL ON I.INVOICE_ID=IL.INVOICE_ID
+-- WHERE TRACK_ID IN(
+--      SELECT TRACK_ID FROM TRACK AS T
+-- 	 JOIN GENRE AS G ON T.GENRE_ID=G.GENRE_ID
+-- 	 WHERE G.NAME LIKE 'Rock'
+-- )
+-- ORDER BY EMAIL;
+
+-- Q-7: Who is the best customer?The customer who has spent the most money will be 
+-- declared the best customer.Write a query that returns the person who spent the
+-- money.
+
+-- SELECT A.ARTIST_ID,A.NAME,COUNT(A.ARTIST_ID) AS NUMBER_OF_SONGS
+-- FROM TRACK AS T
+-- JOIN ALBUM AS AL ON AL.ALBUM_ID=T.ALBUM_ID
+-- JOIN ARTIST AS A ON A.ARTIST_ID=AL.ARTIST_ID
+-- JOIN GENRE AS G ON G.GENRE_ID=T.GENRE_ID
+-- WHERE G.NAME LIKE 'Rock'
+-- GROUP BY A.ARTIST_ID
+-- ORDER BY NUMBER_OF_SONGS DESC
+-- LIMIT 10;
+
+-- Q-8: Return all the track names that have a song length longer than the average song
+-- length. Return the name and milliseconds for each track. Order by the Song length
+-- with the length with the longest songs listed first.
+
+-- SELECT NAME,MILLISECONDS FROM TRACK
+-- WHERE MILLISECONDS > (
+--      SELECT AVG(MILLISECONDS) AS AVG_TRACK_LENGTH
+-- 	 FROM TRACK)
+-- ORDER BY MILLISECONDS DESC;
+
+-- Q-9: - Return all the track names that have a song length longer than the average song
+-- length. Return the name and milliseconds for each track. Order by the Song length
+-- with the length with the longest songs listed first.
+
+-- WITH BEST_SELLING_ARTIST AS (
+--     SELECT  ARTIST.ARTIST_ID AS ARTIST_ID,ARTIST.NAME AS ARTIST_NAME,
+-- 	SUM(INVOICE_LINE.UNIT_PRICE*INVOICE_LINE.QUANTITY) AS TOTAL_SALES
+-- 	FROM INVOICE_LINE
+-- 	JOIN TRACK ON TRACK.TRACK_ID=INVOICE_LINE.TRACK_ID
+-- 	JOIN ALBUM ON ALBUM.ALBUM_ID=TRACK.ALBUM_ID
+-- 	JOIN ARTIST ON ARTIST.ARTIST_ID=ALBUM.ARTIST_ID
+-- 	GROUP BY 1
+-- 	ORDER BY 3 DESC
+-- 	LIMIT 1
+-- )
+-- SELECT C.CUSTOMER_ID,C.FIRST_NAME,C.LAST_NAME,BSA.ARTIST_NAME,
+-- SUM (IL.UNIT_PRICE*IL.QUANTITY) AS AMOUNT_SPENT
+-- FROM INVOICE I
+-- JOIN CUSTOMER C ON C.CUSTOMER_ID=I.CUSTOMER_ID
+-- JOIN INVOICE_LINE IL ON IL.INVOICE_ID=I.INVOICE_ID
+-- JOIN TRACK T ON T.TRACK_ID=IL.TRACK_ID
+-- JOIN ALBUM ALB ON ALB.ALBUM_ID=T.ALBUM_ID
+-- JOIN BEST_SELLING_ARTIST BSA ON BSA.ARTIST_ID=ALB.ARTIST_ID
+-- GROUP BY 1,2,3,4
+-- ORDER BY 5 DESC;
+
+-- Q-10: We want to find out the most popular music GENRE for each country. we 
+-- determine the most popular genre as the genre with the highest amount of purchase
+-- Write a query that returns each country along with the top Genre.For countries
+-- where the maximum number of purchases is shared return all genres.
+
+-- WITH POPULAR_GENRE AS(
+-- SELECT COUNT(INVOICE_LINE.QUANTITY) AS PURCHASE,CUSTOMER.COUNTRY,GENRE.NAME,
+-- GENRE.GENRE_ID,ROW_NUMBER() OVER(PARTITION BY CUSTOMER.COUNTRY ORDER BY
+-- COUNT(INVOICE_LINE.QUANTITY) DESC) AS ROWNO FROM INVOICE_LINE
+-- JOIN INVOICE ON INVOICE.INVOICE_ID=INVOICE_LINE.INVOICE_ID
+-- JOIN CUSTOMER ON CUSTOMER.CUSTOMER_ID=INVOICE.CUSTOMER_ID
+-- JOIN TRACK ON TRACK.TRACK_ID=INVOICE_LINE.TRACK_ID
+-- JOIN GENRE ON GENRE.GENRE_ID=TRACK.GENRE_ID
+-- GROUP BY 2,3,4
+-- ORDER BY 2 ASC, 1 DESC
+-- )
+-- SELECT * FROM POPULAR_GENRE WHERE ROWNO<=1
+
+-- METHOD-2
+
+-- WITH RECURSIVE
+--     SALES_PER_COUNTRY AS(
+--           SELECT COUNT(*) AS PURCHASE_PER_GENRE,CUSTOMER.COUNTRY,GENRE.NAME,
+-- 		  GENRE.GENRE_ID FROM INVOICE_LINE
+-- 		  JOIN INVOICE ON INVOICE.INVOICE_ID=INVOICE_LINE.INVOICE_ID
+-- 		  JOIN CUSTOMER ON CUSTOMER.CUSTOMER_ID=INVOICE.CUSTOMER_ID
+-- 		  JOIN TRACK ON TRACK.TRACK_ID =INVOICE_LINE.TRACK_ID
+-- 		  JOIN GENRE ON GENRE.GENRE_ID=TRACK.GENRE_ID
+-- 		  GROUP BY 2,3,4
+-- 		  ORDER BY 2
+-- 	),
+-- 	MAX_GENRE_PER_COUNTRY AS (SELECT MAX(PURCHASE_PER_GENRE)AS MAX_GENRE_NUMBER,COUNTRY
+-- 	FROM SALES_PER_COUNTRY
+-- 	GROUP BY 2
+-- 	ORDER BY 2)
+	
+-- SELECT SALES_PER_COUNTRY.*
+-- FROM SALES_PER_COUNTRY
+-- JOIN MAX_GENRE_PER_COUNTRY ON SALES_PER_COUNTRY.COUNTRY=MAX_GENRE_PER_COUNTRY.COUNTRY
+-- WHERE SALES_PER_COUNTRY.PURCHASE_PER_GENRE=MAX_GENRE_PER_COUNTRY.MAX_GENRE_NUMBER
+
+-- Q-11: Write a query that determines the customer that has spent the most on music
+-- for each country.Write a query that returns the country along with the top
+-- customer and how much they spent.For countries where the top amount spent is 
+-- shared,provide all customers who spent this amount.
+
+-- WITH RECURSIVE
+--     CUSTOMER_WITH_COUNTRY AS(
+--             SELECT CUSTOMER.CUSTOMER_ID,FIRST_NAME,LAST_NAME,BILLING_COUNTRY,
+-- 			SUM(TOTAL) AS TOTAL_SPENDING FROM INVOICE
+-- 			JOIN CUSTOMER ON CUSTOMER.CUSTOMER_ID=INVOICE.CUSTOMER_ID
+-- 			GROUP BY 1,2,3,4
+-- 			ORDER BY 2,3 DESC),
+
+-- 		COUNTRY_MAX_SPENDING AS(
+--                 SELECT BILLING_COUNTRY,MAX(TOTAL_SPENDING) AS MAX_SPENDING
+-- 				FROM CUSTOMER_WITH_COUNTRY
+-- 				GROUP BY BILLING_COUNTRY)
+
+-- SELECT CC.BILLING_COUNTRY,CC.TOTAL_SPENDING,CC.FIRST_NAME,CC.LAST_NAME,
+-- CC.CUSTOMER_ID FROM CUSTOMER_WITH_COUNTRY CC
+-- JOIN COUNTRY_MAX_SPENDING MS
+-- ON CC.BILLING_COUNTRY = MS.BILLING_COUNTRY
+-- WHERE CC.TOTAL_SPENDING=MS.MAX_SPENDING
+-- ORDER BY 1;
+
+-- method-2:
+
+-- WITH CUSTOMER_WITH_COUNTRY AS(
+--      SELECT CUSTOMER.CUSTOMER_ID,FIRST_NAME,LAST_NAME,BILLING_COUNTRY,SUM(TOTAL)
+-- 	 AS TOTAL_SPENDING, ROW_NUMBER() OVER(PARTITION BY BILLING_COUNTRY ORDER BY 
+-- 	 SUM(TOTAL) DESC)AS ROWNO FROM INVOICE
+-- 	 JOIN CUSTOMER ON CUSTOMER.CUSTOMER_ID=INVOICE.CUSTOMER_ID
+-- 	 GROUP BY 1,2,3,4
+-- 	 ORDER BY 4 ASC,5 DESC)
+-- SELECT * FROM CUSTOMER_WITH_COUNTRY WHERE ROWNO<=1
