@@ -89,11 +89,6 @@ Contributions are welcome! If you have suggestions or additional insights, feel 
 
 ---
 
-## License
-This project is licensed under the MIT License. Feel free to use and modify the content as needed.
-
----
-
 ## Contact
 For any questions or suggestions, please reach out via GitHub.
 
