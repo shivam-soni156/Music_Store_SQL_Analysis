@@ -1,4 +1,3 @@
-# Music_Store_SQL_Analysis
 # Music Store Data Analysis with SQL
 
 ## Project Overview
